@@ -41,9 +41,9 @@ class ParkingService:
                 # удаляем клиента, если он уехал окончательно
                 if not client.is_parked:
                     self.clients.remove(client)
-
+            self.parking.show_status()        
             # Проверяем, не опустела ли парковка
-            if not self.clients:
+            if not self.clients or not self.parking.has_cars():
                 print("✅ Все клиенты обработаны, парковка пуста. Завершение работы.")
                 break
 
