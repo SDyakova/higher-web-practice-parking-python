@@ -1,44 +1,62 @@
+"""Модуль с классом ParkingLot и типами автомобилей для парковки."""
+
+from enum import StrEnum
 
 from models import Client, ParkingSpot
+
+
+class CarType(StrEnum):
+    """Типы автомобилей на парковке."""
+
+    REGULAR = "regular"
+    ELECTRIC = "electric"
+    PREMIUM = "premium"
 
 
 class ParkingLot:
     """Хранит информацию о местах и клиентах."""
 
-    def __init__(self, total_spots: int, electric_spots: int, premium_spots: int):
+    def __init__(
+        self, total_spots: int, electric_spots: int, premium_spots: int
+    ) -> None:
+        """Инициализирует парковку с заданным количеством мест."""
         self.spots: list[ParkingSpot] = []
         self._init_spots(total_spots, electric_spots, premium_spots)
 
-    def _init_spots(self, total, electric, premium):
-        for i in range(1, total + 1):
-            if i <= electric:
-                spot_type = "electric"
-            elif i <= electric + premium:
-                spot_type = "premium"
+    def _init_spots(self, total: int, electric: int, premium: int) -> None:
+        """Инициализирует список парковочных мест с заданными типами."""
+        for spot_id in range(1, total + 1):
+            if spot_id <= electric:
+                spot_type = CarType.ELECTRIC
+            elif spot_id <= electric + premium:
+                spot_type = CarType.PREMIUM
             else:
-                spot_type = "regular"
+                spot_type = CarType.REGULAR
 
-            self.spots.append(ParkingSpot(i, spot_type, None))
+            self.spots.append(ParkingSpot(spot_id, spot_type, None))
 
     def park_client(self, client: Client) -> bool:
         """Паркуем клиента на подходящее место."""
         if client.is_parked:
             return True
-        if client.car_type == "regular":
+        if client.car_type == CarType.REGULAR:
             for spot in self.spots:
-                if spot.spot_type == "regular" and spot.client is None:
+                if spot.spot_type == CarType.REGULAR and spot.client is None:
                     spot.client = client
                     client.is_parked = True
                     return True
-        elif client.car_type == "electric":
+        elif client.car_type == CarType.ELECTRIC:
             for spot in self.spots:
-                if spot.spot_type == "electric" and spot.client is None:
+                if spot.spot_type == CarType.ELECTRIC and spot.client is None:
                     spot.client = client
                     client.is_parked = True
                     return True
-        elif client.car_type == "premium":
+        elif client.car_type == CarType.PREMIUM:
             for spot in self.spots:
-                if spot.spot_type in ("premium", "regular") and spot.client is None:
+                if spot.client is None and spot.spot_type in (
+                    CarType.PREMIUM,
+                    CarType.REGULAR,
+                ):
                     spot.client = client
                     client.is_parked = True
                     return True
@@ -57,14 +75,19 @@ class ParkingLot:
         """Проверяет, есть ли машины на парковке."""
         return any(spot.client is not None for spot in self.spots)
 
-    def show_status(self):
-        total = len(self.spots)
-        occupied = sum(1 for s in self.spots if s.client)
-        print(f"\n📊 Парковка: {occupied}/{total} занято")
-        for s in self.spots:
-            if s.client:
+    def show_status(self) -> None:
+        """Выводит текущее состояние парковки в консоль."""
+        total_spots = len(self.spots)
+        occupied_spots = sum(1 for spot in self.spots if spot.client)
+
+        print(f"\n📊 Парковка: {occupied_spots}/{total_spots} занято")
+
+        for spot in self.spots:
+            if spot.client:
                 print(
-                    f" - Место {s.id:2}: {s.spot_type:<8} — {s.client.plate} ({s.client.car_type})")
+                    f" - Место {spot.id:2}: {spot.spot_type:<8} — "
+                    f"{spot.client.plate} ({spot.client.car_type})"
+                )
             else:
-                print(f" - Место {s.id:2}: {s.spot_type:<8} — свободно")
+                print(f" - Место {spot.id:2}: {spot.spot_type:<8} — свободно")
         print()

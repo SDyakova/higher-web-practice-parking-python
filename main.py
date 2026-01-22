@@ -1,5 +1,8 @@
-import time
+"""Точка входа в симуляцию работы парковочного сервиса."""
+
 import random
+import time
+
 
 from handler.abc import ParkingEventHandler
 from handler.impl import ParkingEventHandlerImpl
@@ -8,46 +11,57 @@ from parking import ParkingLot
 
 
 class ParkingService:
-    def __init__(self, handler: ParkingEventHandler, clients: list[Client], parking_lot: ParkingLot):
+    """Сервис управления событиями и жизненным циклом парковки."""
+
+    def __init__(
+        self,
+        handler: ParkingEventHandler,
+        clients: list[Client],
+        parking_lot: ParkingLot,
+    ):
+        """Инициализирует сервис парковки."""
         self.handler = handler
         self.parking = parking_lot
         self.clients = clients
 
     def run(self):
+        """Запускает симуляцию работы парковочного сервиса."""
         print("🚗 Парковочный сервис запущен...")
 
         while self.clients:
             client = random.choice(self.clients)
 
+            # 70% шанс, что уедет
+            if client.is_parked and random.random() >= 0.7:
+                continue
+
+            # 50% шанс, что заедет
+            if not client.is_parked and random.random() >= 0.5:
+                continue
+
+            # Обработка события
             if client.is_parked:
-                # 70% шанс, что уедет
-                if random.random() < 0.7:
-                    event = EventType.LEAVE
-                else:
-                    continue  # остался стоять
-            else:
-                # 50% шанс, что заедет
-                if random.random() < 0.5:
-                    event = EventType.ARRIVE
-                else:
-                    continue  # остался снаружи
-
-            print(f"⚡ Событие: {event.upper()} — {client.plate}")
-
-            if event == EventType.ARRIVE:
-                self.handler.handle_arrival(client, self.parking)
-            elif event == EventType.LEAVE:
+                print(
+                    f"⚡ Событие: {EventType.LEAVE.upper()} — {client.plate}"
+                )
                 self.handler.handle_departure(client, self.parking)
-                # удаляем клиента, если он уехал окончательно
                 if not client.is_parked:
                     self.clients.remove(client)
-            self.parking.show_status()        
+            else:
+                print(
+                    f"⚡ Событие: {EventType.ARRIVE.upper()} — {client.plate}"
+                )
+                self.handler.handle_arrival(client, self.parking)
+            self.parking.show_status()
             # Проверяем, не опустела ли парковка
             if not self.clients or not self.parking.has_cars():
-                print("✅ Все клиенты обработаны, парковка пуста. Завершение работы.")
+                print(
+                    "✅ Все клиенты обработаны, парковка пуста. Завершение работы."
+                )
                 break
 
             time.sleep(0.3)
+
 
 if __name__ == "__main__":
     car_types = ["regular", "electric", "premium"]
